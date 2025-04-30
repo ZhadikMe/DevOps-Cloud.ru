@@ -1,0 +1,78 @@
+- name: Setup Web Application with Nginx Load Balancer
+  hosts: webserver
+  become: true
+  tasks:
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
+
+    - name: Add Docker GPG key using curl and gpg
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/docker-archive-keyring.gpg
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu jammy stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: yes
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install pip for Python 3
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install Python Docker SDK using apt
+      apt:
+        name: python3-docker
+        state: present
+
+    - name: Log in to Docker Hub Private Registry
+      command: docker login -u zhadik -p Awoination17 
+
+    - name: Run Docker container 1
+      command: docker run -d --name webapp1 zhadik/cloud:latest
+
+    - name: Run Docker container 2
+      command: docker run -d --name webapp2 zhadik/cloud:latest
+
+    - name: Run Docker container 3
+      command: docker run -d --name webapp3 zhadik/cloud:latest
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Configure Nginx as Load Balancer
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+      notify: Restart nginx
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
