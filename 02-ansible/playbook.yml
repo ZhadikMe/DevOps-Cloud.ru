@@ -37,17 +37,6 @@
         state: started
         enabled: yes
 
-    - name: Install pip for Python 3
-      apt:
-        name: python3-pip
-        state: present
-        update_cache: yes
-
-    - name: Install Python Docker SDK using apt
-      apt:
-        name: python3-docker
-        state: present
-
     - name: Log in to Docker Hub Private Registry
       command: docker login -u zhadik -p Awoination17 
 
